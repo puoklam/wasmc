@@ -15,6 +15,8 @@ go run main.go
 
 wasm/main.go
 ```go
+doc := js.Global().Get("document")
+
 div := NewElement(WithText("hello"))
 h3 := NewElement(WithTag("h3"), WithText("Hello World"))
 box := NewBox(
