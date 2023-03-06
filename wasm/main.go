@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"syscall/js"
 
 	. "github.com/puoklam/wasmc/component"
@@ -51,6 +52,30 @@ func main() {
 	)
 	flex.Children().Append(item1, item2)
 
-	mainEle := NewElementFromJS(doc.Call("getElementById", "main"))
-	mainEle.Children().Append(div, h3, box, circle, flex)
+	mainEle := ElementOf(doc.Call("getElementById", "main"))
+
+	grid := NewGrid()
+	gi1 := NewGridItem(6, WithText("HI"))
+	gi2 := NewGridItem(6, WithText("Ho"))
+	gi3 := NewGridItem(8, WithText("888"))
+	gi4 := NewGridItem(2, WithText("5"))
+	gi5 := NewGridItem(1, WithText("6"))
+	gi6 := NewGridItem(2, WithText("7"))
+	grid.Children().Append(gi1, gi2, gi3, gi4, gi5, gi6)
+
+	fn := js.FuncOf(func(this js.Value, args []js.Value) any {
+		fmt.Println(args[0].Get("target").Get("value"))
+		return nil
+	})
+	input := NewInput[float64](
+		"number",
+		WithId("inp"),
+		WithAttr(map[string]any{"value": 1.2}),
+		WithListener(map[string]js.Func{"change": fn}),
+	)
+	// var st Setter[float64] = input
+	// var vr Valuer[float64] = input
+
+	mainEle.Children().Append(div, h3, box, circle, flex, grid, input)
+	<-make(chan bool)
 }

@@ -1,6 +1,10 @@
 package component
 
-import "syscall/js"
+import (
+	"syscall/js"
+
+	"golang.org/x/exp/constraints"
+)
 
 type Shape interface {
 	Area() float64
@@ -9,7 +13,7 @@ type Shape interface {
 type Component interface {
 	// Classes()
 	// Render()
-	Value() js.Value
+	JS() js.Value
 	Children() *children
 }
 
@@ -20,11 +24,22 @@ type children struct {
 
 func (cl *children) Append(cs ...Component) {
 	for _, c := range cs {
-		cl.p.Value().Call("appendChild", c.Value())
+		cl.p.JS().Call("appendChild", c.JS())
 	}
 	cl.s = cl.p.Children().s
 }
 
 func (cl *children) Slice() []Component {
 	return cl.s
+}
+
+type ValueType interface {
+	constraints.Ordered
+}
+type Valuer[T ValueType] interface {
+	Value() T
+}
+
+type Setter[T ValueType] interface {
+	Set(T)
 }

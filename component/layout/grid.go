@@ -1,6 +1,10 @@
 package layout
 
-import . "github.com/puoklam/wasmc/component"
+import (
+	"fmt"
+
+	. "github.com/puoklam/wasmc/component"
+)
 
 type Grid struct {
 	*Element
@@ -15,4 +19,18 @@ func NewGrid(opts ...ElementOption) Grid {
 	opts = append([]ElementOption{WithStyle(ds)}, opts...)
 	e := NewElement(opts...)
 	return Grid{e}
+}
+
+type GridItem struct {
+	*Element
+}
+
+func NewGridItem(t int, opts ...ElementOption) GridItem {
+	gridCol := fmt.Sprintf("auto / span %d", t)
+	ds := map[string]string{
+		"grid-column": gridCol,
+	}
+	opts = append([]ElementOption{WithStyle(ds)}, opts...)
+	e := NewElement(opts...)
+	return GridItem{e}
 }

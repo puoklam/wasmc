@@ -42,6 +42,6 @@ item2 := NewBox(
 )
 flex.Children().Append(item1, item2)
 
-mainEle := NewElementFromJS(doc.Call("getElementById", "main"))
+mainEle := ElementOf(doc.Call("getElementById", "main"))
 mainEle.Children().Append(div, h3, box, circle, flex)
 ```

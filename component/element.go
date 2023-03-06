@@ -29,6 +29,8 @@ type elementOptions struct {
 	classes classesOption // initial classes
 	text    textOption    // initial text
 	style   styleOption   // initial style
+	attr    attrOption    // initial attributes
+	lsnr    lsnrOption    // initial event listeners
 }
 
 func newEleOpts() elementOptions {
@@ -44,7 +46,7 @@ type Element struct {
 	value js.Value
 }
 
-func (e Element) Value() js.Value {
+func (e Element) JS() js.Value {
 	return e.value
 }
 
@@ -53,7 +55,7 @@ func (e Element) Children() *children {
 	cLen := c.Get("length").Int()
 	ch := make([]Component, 0, cLen)
 	for i := 0; i < cLen; i++ {
-		ch = append(ch, NewElementFromJS(c.Index(i)))
+		ch = append(ch, ElementOf(c.Index(i)))
 	}
 	return &children{ch, e}
 }
@@ -67,6 +69,8 @@ type idOption string
 type classesOption []string
 type textOption string
 type styleOption map[string]string
+type attrOption map[string]any
+type lsnrOption map[string]js.Func
 
 func (t tagOption) apply(opts *elementOptions) {
 	opts.tag = t
@@ -101,6 +105,24 @@ func (s styleOption) String() string {
 	return str + " }"
 }
 
+func (a attrOption) apply(opts *elementOptions) {
+	if opts.attr == nil {
+		opts.attr = make(attrOption)
+	}
+	for k, v := range a {
+		opts.attr[k] = v
+	}
+}
+
+func (l lsnrOption) apply(opts *elementOptions) {
+	if opts.lsnr == nil {
+		opts.lsnr = make(lsnrOption)
+	}
+	for k, v := range l {
+		opts.lsnr[k] = v
+	}
+}
+
 func WithTag(t string) ElementOption {
 	return tagOption(t)
 }
@@ -125,6 +147,22 @@ func WithStyle(s map[string]string) ElementOption {
 	return style
 }
 
+func WithAttr(a map[string]any) ElementOption {
+	attr := make(attrOption)
+	for k, v := range a {
+		attr[k] = v
+	}
+	return attr
+}
+
+func WithListener(l map[string]js.Func) ElementOption {
+	lsnr := make(lsnrOption)
+	for k, v := range l {
+		lsnr[k] = v
+	}
+	return lsnr
+}
+
 func NewElement(opts ...ElementOption) *Element {
 	eleOpts := newEleOpts()
 	for _, opt := range opts {
@@ -133,6 +171,7 @@ func NewElement(opts ...ElementOption) *Element {
 
 	ele := doc.Call("createElement", string(eleOpts.tag))
 
+	ele.Set("id", string(eleOpts.id))
 	ele.Set("innerText", string(eleOpts.text))
 	ele.Set("className", strings.Join(eleOpts.classes, " "))
 
@@ -146,11 +185,17 @@ func NewElement(opts ...ElementOption) *Element {
 	// for k, v := range eleOpts.style {
 	// 	style.Call("setProperty", k, v)
 	// }
+	for k, v := range eleOpts.attr {
+		ele.Call("setAttribute", k, v)
+	}
+	for k, v := range eleOpts.lsnr {
+		ele.Call("addEventListener", k, v)
+	}
 
 	return &Element{ele}
 }
 
-func NewElementFromJS(v js.Value) *Element {
+func ElementOf(v js.Value) *Element {
 	return &Element{v}
 }
 
