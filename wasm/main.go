@@ -76,6 +76,20 @@ func main() {
 	// var st Setter[float64] = input
 	// var vr Valuer[float64] = input
 
+	b1 := NewBox(
+		300,
+		200,
+		WithText("hello"),
+		WithStyle(map[string]string{"background-color": "blue"}),
+	)
+	b2 := NewBox(
+		300,
+		200,
+		WithText("hello"),
+		WithStyle(map[string]string{"background-color": "blue"}),
+	)
+
 	mainEle.Children().Append(div, h3, box, circle, flex, grid, input)
+	mainEle.Children().Append(b1, b2)
 	<-make(chan bool)
 }

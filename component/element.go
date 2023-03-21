@@ -24,13 +24,13 @@ func init() {
 }
 
 type elementOptions struct {
-	tag     tagOption     // initial tag
-	id      idOption      // initial id
-	classes classesOption // initial classes
-	text    textOption    // initial text
-	style   styleOption   // initial style
-	attr    attrOption    // initial attributes
-	lsnr    lsnrOption    // initial event listeners
+	tag     string             // initial tag
+	id      string             // initial id
+	classes []string           // initial classes
+	text    string             // initial text
+	style   styleOption        // initial style
+	attr    map[string]any     // initial attributes
+	lsnr    map[string]js.Func // initial event listeners
 }
 
 func newEleOpts() elementOptions {
@@ -64,38 +64,7 @@ type ElementOption interface {
 	apply(*elementOptions)
 }
 
-type tagOption string
-type idOption string
-type classesOption []string
-type textOption string
 type styleOption map[string]string
-type attrOption map[string]any
-type lsnrOption map[string]js.Func
-
-func (t tagOption) apply(opts *elementOptions) {
-	opts.tag = t
-}
-
-func (id idOption) apply(opts *elementOptions) {
-	opts.id = id
-}
-
-func (c classesOption) apply(opts *elementOptions) {
-	opts.classes = append(opts.classes, c...)
-}
-
-func (t textOption) apply(opts *elementOptions) {
-	opts.text = t
-}
-
-func (s styleOption) apply(opts *elementOptions) {
-	if opts.style == nil {
-		opts.style = make(styleOption)
-	}
-	for k, v := range s {
-		opts.style[k] = v
-	}
-}
 
 func (s styleOption) String() string {
 	str := "{ "
@@ -105,62 +74,74 @@ func (s styleOption) String() string {
 	return str + " }"
 }
 
-func (a attrOption) apply(opts *elementOptions) {
-	if opts.attr == nil {
-		opts.attr = make(attrOption)
-	}
-	for k, v := range a {
-		opts.attr[k] = v
-	}
-}
+type optionFunc func(*elementOptions)
 
-func (l lsnrOption) apply(opts *elementOptions) {
-	if opts.lsnr == nil {
-		opts.lsnr = make(lsnrOption)
-	}
-	for k, v := range l {
-		opts.lsnr[k] = v
-	}
+func (f optionFunc) apply(opts *elementOptions) {
+	f(opts)
 }
 
 func WithTag(t string) ElementOption {
-	return tagOption(t)
+	var fn optionFunc = func(opts *elementOptions) {
+		opts.tag = t
+	}
+	return fn
 }
 
 func WithId(id string) ElementOption {
-	return idOption(id)
+	var fn optionFunc = func(opts *elementOptions) {
+		opts.id = id
+	}
+	return fn
 }
 
 func WithClasses(cs []string) ElementOption {
-	return classesOption(cs)
+	var fn optionFunc = func(opts *elementOptions) {
+		opts.classes = append(opts.classes, cs...)
+	}
+	return fn
 }
 
 func WithText(t string) ElementOption {
-	return textOption(t)
+	var fn optionFunc = func(opts *elementOptions) {
+		opts.text = t
+	}
+	return fn
 }
 
 func WithStyle(s map[string]string) ElementOption {
-	style := make(styleOption)
-	for k, v := range s {
-		style[k] = v
+	var fn optionFunc = func(opts *elementOptions) {
+		if opts.style == nil {
+			opts.style = make(styleOption)
+		}
+		for k, v := range s {
+			opts.style[k] = v
+		}
 	}
-	return style
+	return fn
 }
 
 func WithAttr(a map[string]any) ElementOption {
-	attr := make(attrOption)
-	for k, v := range a {
-		attr[k] = v
+	var fn optionFunc = func(opts *elementOptions) {
+		if opts.attr == nil {
+			opts.attr = make(map[string]any)
+		}
+		for k, v := range a {
+			opts.attr[k] = v
+		}
 	}
-	return attr
+	return fn
 }
 
 func WithListener(l map[string]js.Func) ElementOption {
-	lsnr := make(lsnrOption)
-	for k, v := range l {
-		lsnr[k] = v
+	var fn optionFunc = func(opts *elementOptions) {
+		if opts.lsnr == nil {
+			opts.lsnr = make(map[string]js.Func)
+		}
+		for k, v := range l {
+			opts.lsnr[k] = v
+		}
 	}
-	return lsnr
+	return fn
 }
 
 func NewElement(opts ...ElementOption) *Element {
